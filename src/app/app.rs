@@ -2,12 +2,11 @@
 use crate::app::error::*;
 use crate::app::finger::*;
 use crate::app::fprint::*;
-use crate::app::message::Message;
+use crate::app::message::{Message, REPOSITORY};
 use crate::app::users::*;
 use crate::app::{ContextPage, MenuAction};
 use crate::config::Config;
 use crate::fl;
-use crate::fprint_dbus::DeviceProxy;
 
 use cosmic::app::context_drawer;
 use cosmic::cosmic_config::{self, CosmicConfigEntry};
@@ -19,9 +18,7 @@ use cosmic::{cosmic_theme, theme};
 use super::AppModel;
 use futures_util::SinkExt;
 use std::collections::HashMap;
-use std::sync::Arc;
 
-const REPOSITORY: &str = env!("CARGO_PKG_REPOSITORY");
 const APP_ICON: &[u8] = include_bytes!("../../resources/icons/hicolor/scalable/apps/enroll.svg");
 
 /// Create a COSMIC application from the app model
@@ -355,7 +352,7 @@ impl AppModel {
         view_column(vec![col.into()]).into()
     }
 
-    fn list_fingers_task(&self) -> Task<cosmic::Action<Message>> {
+    pub(crate) fn list_fingers_task(&self) -> Task<cosmic::Action<Message>> {
         if let (Some(proxy), Some(user)) = (&self.device_proxy, &self.selected_user) {
             let proxy = proxy.clone();
             let username = (*user.username).clone();
@@ -374,274 +371,6 @@ impl AppModel {
         Task::none()
     }
 
-    fn on_cancel_clear(&mut self) -> Task<cosmic::Action<Message>> {
-        self.confirm_clear = false;
-        Task::none()
-    }
-
-    fn on_clear_completion(&mut self, res: Result<(), AppError>) -> Task<cosmic::Action<Message>> {
-        match res {
-            Ok(_) => {
-                self.status = fl!("device-cleared");
-                self.enrolled_fingers.clear();
-            }
-            Err(e) => {
-                self.status = e.localized_message();
-            }
-        }
-        self.busy = false;
-        Task::none()
-    }
-
-    fn on_clicked_link(&mut self) -> Task<cosmic::Action<Message>> {
-        let _ = open::that_detached(REPOSITORY);
-        Task::none()
-    }
-
-    fn on_connection_ready(&mut self, conn: zbus::Connection) -> Task<cosmic::Action<Message>> {
-        self.connection = Some(conn.clone());
-        self.status = fl!("status-searching-device");
-
-        let conn_clone = conn.clone();
-        Task::perform(
-            async move {
-                match find_device(&conn_clone).await {
-                    Ok((path, proxy)) => Message::DeviceFound(Some((path, proxy))),
-                    Err(e) => {
-                        let error = AppError::from(e);
-                        if matches!(error, AppError::Unknown(_)) {
-                            Message::OperationError(AppError::DeviceNotFound)
-                        } else {
-                            Message::OperationError(error)
-                        }
-                    }
-                }
-            },
-            cosmic::Action::App,
-        )
-    }
-
-    fn on_context_page_toggle(
-        &mut self,
-        context_page: ContextPage,
-    ) -> Task<cosmic::Action<Message>> {
-        if self.context_page == context_page {
-            // Close the context drawer if the toggled context page is the same.
-            self.core.window.show_context = !self.core.window.show_context;
-        } else {
-            // Open the context drawer to display the requested context page.
-            self.context_page = context_page;
-            self.core.window.show_context = true;
-        }
-        Task::none()
-    }
-
-    fn on_error(&mut self, err: AppError) -> Task<cosmic::Action<Message>> {
-        self.status = err.localized_message();
-        self.busy = false;
-        self.enrolling_finger = None;
-        Task::none()
-    }
-
-    fn on_fingers_listed(&mut self, fingers: Vec<String>) -> Task<cosmic::Action<Message>> {
-        self.enrolled_fingers = fingers;
-        Task::none()
-    }
-
-    fn on_finger_selected(&mut self, finger: String) -> Task<cosmic::Action<Message>> {
-        if self.busy {
-            return Task::none();
-        }
-        self.confirm_clear = false;
-        for fingers in Finger::all() {
-            if fingers.localized_name() == finger {
-                self.selected_finger = *fingers;
-                break;
-            }
-        }
-        Task::none()
-    }
-
-    fn on_device_found(
-        &mut self,
-        device_info: Option<(zbus::zvariant::OwnedObjectPath, DeviceProxy<'static>)>,
-    ) -> Task<cosmic::Action<Message>> {
-        if let Some((path, proxy)) = device_info {
-            self.device_path = Some(Arc::new(path));
-            self.device_proxy = Some(proxy);
-            self.status = fl!("status-device-found");
-            self.busy = false;
-
-            if self.selected_user.is_some() {
-                self.list_fingers_task()
-            } else {
-                Task::none()
-            }
-        } else {
-            self.device_path = None;
-            self.device_proxy = None;
-            self.status = fl!("status-no-device-found");
-            self.busy = true;
-            Task::none()
-        }
-    }
-
-    fn on_enroll_start(&mut self, total: Option<u32>) -> Task<cosmic::Action<Message>> {
-        self.enroll_total_stages = total;
-        self.enroll_progress = 0;
-        self.status = fl!("enroll-starting");
-        Task::none()
-    }
-
-    fn on_enroll_status(&mut self, status: String, done: bool) -> Task<cosmic::Action<Message>> {
-        let status_msg = match status.as_str() {
-            "enroll-stage-passed" => {
-                self.enroll_progress += 1;
-                fl!("enroll-stage-passed")
-            }
-            "enroll-retry-scan" => fl!("enroll-retry-scan"),
-            "enroll-swipe-too-short" => fl!("enroll-swipe-too-short"),
-            "enroll-finger-not-centered" => fl!("enroll-finger-not-centered"),
-            "enroll-remove-and-retry" => fl!("enroll-remove-and-retry"),
-            "enroll-unknown-error" => fl!("enroll-unknown-error"),
-            "enroll-completed" => fl!("enroll-completed"),
-            "enroll-failed" => fl!("enroll-failed"),
-            "enroll-disconnected" => fl!("enroll-disconnected"),
-            "enroll-data-full" => fl!("enroll-data-full"),
-            "enroll-too-fast" => fl!("enroll-too-fast"),
-            "enroll-duplicate" => fl!("enroll-duplicate"),
-            "enroll-cancelled" => fl!("enroll-cancelled"),
-            _ => status.clone(),
-        };
-        self.status = status_msg;
-
-        if done {
-            self.busy = false;
-            self.enrolling_finger = None;
-
-            if status == "enroll-completed" {
-                return self.list_fingers_task();
-            }
-        }
-        Task::none()
-    }
-
-    fn on_enroll_stop(&self) -> Task<cosmic::Action<Message>> {
-        if let (Some(path), Some(conn)) = (self.device_path.clone(), self.connection.clone()) {
-            let path = (*path).clone();
-            return Task::perform(
-                async move {
-                    let device = DeviceProxy::builder(&conn).path(path)?.build().await?;
-                    let _ = device.enroll_stop().await;
-                    device.release().await?;
-                    Ok::<(), zbus::Error>(())
-                },
-                |res| match res {
-                    Ok(_) => cosmic::Action::App(Message::EnrollStatus(
-                        "enroll-cancelled".to_string(),
-                        true,
-                    )),
-                    Err(e) => cosmic::Action::App(Message::OperationError(AppError::from(e))),
-                },
-            );
-        }
-        Task::none()
-    }
-
-    fn on_clear_device(&mut self) -> Task<cosmic::Action<Message>> {
-        if !self.confirm_clear {
-            self.confirm_clear = true;
-            return Task::none();
-        }
-
-        if let (Some(path), Some(conn)) = (self.device_path.clone(), self.connection.clone()) {
-            self.status = fl!("clearing-device");
-            self.busy = true;
-            self.confirm_clear = false;
-            let path = (*path).clone();
-            let usernames: Vec<String> = self.users.iter().map(|u| (*u.username).clone()).collect();
-            return Task::perform(
-                async move {
-                    match clear_all_fingers_dbus(&conn, path, usernames).await {
-                        Ok(_) => Message::ClearComplete(Ok(())),
-                        Err(e) => Message::ClearComplete(Err(AppError::from(e))),
-                    }
-                },
-                cosmic::Action::App,
-            );
-        }
-        Task::none()
-    }
-
-    fn on_delete(&mut self) -> Task<cosmic::Action<Message>> {
-        if let (Some(path), Some(conn), Some(user)) = (
-            self.device_path.clone(),
-            self.connection.clone(),
-            self.selected_user.clone(),
-        ) {
-            self.status = fl!("deleting");
-            self.busy = true;
-            let path = (*path).clone();
-            let username = (*user.username).clone();
-
-            if let Some(finger_name) = self.selected_finger.as_finger_id() {
-                let finger_name = finger_name.to_string();
-                return Task::perform(
-                    async move {
-                        match delete_fingerprint_dbus(&conn, path, finger_name, username).await {
-                            Ok(_) => Message::DeleteComplete,
-                            Err(e) => Message::OperationError(AppError::from(e)),
-                        }
-                    },
-                    cosmic::Action::App,
-                );
-            } else {
-                return Task::perform(
-                    async move {
-                        match delete_fingers(&conn, path, username).await {
-                            Ok(_) => Message::DeleteComplete,
-                            Err(e) => Message::OperationError(AppError::from(e)),
-                        }
-                    },
-                    cosmic::Action::App,
-                );
-            }
-        }
-        Task::none()
-    }
-
-    fn on_delete_complete(&mut self) -> Task<cosmic::Action<Message>> {
-        self.status = fl!("deleted");
-        self.busy = false;
-        if let Some(page) = self.nav.data::<Finger>(self.nav.active()) {
-            if let Some(finger_id) = page.as_finger_id() {
-                self.enrolled_fingers.retain(|f| f != finger_id);
-            } else {
-                self.enrolled_fingers.clear();
-            }
-        }
-        Task::none()
-    }
-
-    fn on_open_link(&mut self, url: String) -> Task<cosmic::Action<Message>> {
-        match open::that_detached(&url) {
-            Ok(()) => Task::none(),
-            Err(err) => {
-                eprintln!("failed to open {url:?}: {err}");
-                Task::none()
-            }
-        }
-    }
-
-    fn on_register(&mut self) -> Task<cosmic::Action<Message>> {
-        self.busy = true;
-        if let Some(finger_id) = self.selected_finger.as_finger_id() {
-            self.enrolling_finger = Some(Arc::new(finger_id.to_string()));
-        }
-        self.status = fl!("status-starting-enrollment");
-        Task::none()
-    }
-
     /// Updates the header and window titles.
     pub fn update_title(&mut self) -> Task<cosmic::Action<Message>> {
         let mut window_title = fl!("app-title");
@@ -656,10 +385,5 @@ impl AppModel {
         } else {
             Task::none()
         }
-    }
-
-    fn on_update_config(&mut self, config: Config) -> Task<cosmic::Action<Message>> {
-        self.config = config;
-        Task::none()
     }
 }
