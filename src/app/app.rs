@@ -4,7 +4,6 @@ use crate::app::finger::*;
 use crate::app::fprint::*;
 use crate::app::message::Message;
 use crate::app::users::*;
-
 use crate::app::{ContextPage, MenuAction};
 use crate::config::Config;
 use crate::fl;
@@ -12,26 +11,18 @@ use crate::fprint_dbus::DeviceProxy;
 
 use cosmic::app::context_drawer;
 use cosmic::cosmic_config::{self, CosmicConfigEntry};
-use cosmic::iced::alignment::{Horizontal, Vertical};
-use cosmic::iced::{Alignment, Length, Subscription};
-use cosmic::iced_widget::pick_list;
+use cosmic::iced::{Alignment, Subscription};
 use cosmic::prelude::*;
 use cosmic::widget::{self, column, dialog, menu, nav_bar, settings::view_column, text};
 use cosmic::{cosmic_theme, theme};
 
+use super::AppModel;
 use futures_util::SinkExt;
 use std::collections::HashMap;
 use std::sync::Arc;
 
 const REPOSITORY: &str = env!("CARGO_PKG_REPOSITORY");
 const APP_ICON: &[u8] = include_bytes!("../../resources/icons/hicolor/scalable/apps/enroll.svg");
-const FPRINT_ICON: &[u8] = include_bytes!("../../resources/icons/hicolor/scalable/apps/fprint.svg");
-const STATUS_TEXT_SIZE: u16 = 16;
-const PROGRESS_BAR_HEIGHT: u16 = 10;
-const MAIN_SPACING: u16 = 20;
-const MAIN_PADDING: u16 = 20;
-
-use super::AppModel;
 
 /// Create a COSMIC application from the app model
 impl cosmic::Application for AppModel {
@@ -193,28 +184,13 @@ impl cosmic::Application for AppModel {
         }
     }
 
-    /// Describes the interface based on the current state of the application model.
-    ///
-    /// Application events will be processed through the view. Any messages emitted by
-    /// events received by widgets will be passed to the update method.
+    /// Chooses which view to render based on config
     fn view(&self) -> Element<'_, Self::Message> {
-        let mut column = column().push(self.view_header()).push(self.view_status());
-
-        if let Some(picker) = self.view_finger_picker() {
-            column = column.push(picker);
+        if self.config.experimental_ui {
+            self.view_experimental()
+        } else {
+            self.view_main()
         }
-
-        if let Some(progress) = self.view_progress() {
-            column = column.push(progress);
-        }
-
-        column
-            .push(self.view_icon())
-            .push(self.view_controls())
-            .align_x(Horizontal::Center)
-            .spacing(MAIN_SPACING)
-            .padding(MAIN_PADDING)
-            .into()
     }
 
     /// Register subscriptions for this application.
@@ -684,122 +660,5 @@ impl AppModel {
     fn on_update_config(&mut self, config: Config) -> Task<cosmic::Action<Message>> {
         self.config = config;
         Task::none()
-    }
-
-    fn view_header(&self) -> Element<'_, Message> {
-        if self.config.experimental_ui {
-            return column().into();
-        }
-        text::title1(fl!("app-title"))
-            .apply(widget::container)
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .align_x(Horizontal::Center)
-            .align_y(Vertical::Center)
-            .into()
-    }
-
-    fn view_finger_picker(&self) -> Option<Element<'_, Message>> {
-        let mut vec = Vec::new();
-
-        for page in Finger::all() {
-            vec.push(page.localized_name())
-        }
-
-        Some(
-            pick_list(
-                vec,
-                Some(self.selected_finger.localized_name()),
-                Message::FingerSelected,
-            )
-            .width(Length::Fixed(200.0))
-            .apply(widget::container)
-            .width(Length::Fill)
-            .align_x(Horizontal::Center)
-            .into(),
-        )
-    }
-
-    fn view_icon(&self) -> Element<'_, Message> {
-        widget::svg(widget::svg::Handle::from_memory(FPRINT_ICON))
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .into()
-    }
-
-    fn view_status(&self) -> Element<'_, Message> {
-        widget::text(&self.status)
-            .size(STATUS_TEXT_SIZE)
-            .apply(widget::container)
-            .width(Length::Fill)
-            .align_x(Horizontal::Center)
-            .into()
-    }
-
-    fn view_progress(&self) -> Option<Element<'_, Message>> {
-        self.enrolling_finger.as_ref()?;
-
-        self.enroll_total_stages.map(|total| {
-            widget::progress_bar(0.0..=(total as f32), self.enroll_progress as f32)
-                .height(PROGRESS_BAR_HEIGHT)
-                .into()
-        })
-    }
-
-    fn view_controls(&self) -> Element<'_, Message> {
-        let buttons_enabled =
-            !self.busy && self.device_path.is_some() && self.enrolling_finger.is_none();
-
-        let current_finger = self.selected_finger.as_finger_id();
-        let is_enrolled = if let Some(f) = current_finger {
-            self.enrolled_fingers.iter().any(|ef| ef == f)
-        } else {
-            !self.enrolled_fingers.is_empty()
-        };
-
-        let register_btn = widget::button::text(fl!("register"));
-        let delete_btn = widget::button::text(fl!("delete"));
-        let clear_btn = widget::button::text(fl!("clear-device"));
-
-        let register_btn = if buttons_enabled && current_finger.is_some() {
-            register_btn.on_press(Message::Register)
-        } else {
-            register_btn
-        };
-
-        let delete_btn = if buttons_enabled && is_enrolled {
-            delete_btn.on_press(Message::Delete)
-        } else {
-            delete_btn
-        };
-
-        let clear_btn =
-            if !self.busy && self.device_path.is_some() && self.enrolling_finger.is_none() {
-                clear_btn.on_press(Message::ClearDevice)
-            } else {
-                clear_btn
-            };
-
-        let mut cancel_btn = widget::button::text(fl!("cancel"));
-        if self.enrolling_finger.is_some() {
-            cancel_btn = cancel_btn.on_press(Message::EnrollStop);
-        }
-
-        let mut row = widget::row()
-            .push(register_btn)
-            .push(delete_btn)
-            .push(clear_btn);
-
-        if self.enrolling_finger.is_some() {
-            row = row.push(cancel_btn);
-        }
-
-        row.apply(widget::container)
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .align_x(Horizontal::Center)
-            .align_y(Vertical::Center)
-            .padding(MAIN_PADDING)
-            .into()
     }
 }

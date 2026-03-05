@@ -15,6 +15,7 @@ pub mod finger;
 pub mod fprint;
 pub mod message;
 pub mod users;
+pub mod view;
 
 /// The application model stores app-specific state used to describe its interface and
 /// drive its logic.

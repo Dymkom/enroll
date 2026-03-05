@@ -1096,11 +1096,7 @@ dependencies = [
 
 [[package]]
 name = "cosmic-utils-enroll"
-<<<<<<< Updated upstream
-version = "0.5.2"
-=======
-version = "0.5.1"
->>>>>>> Stashed changes
+version = "0.5.3"
 dependencies = [
  "futures-util",
  "i18n-embed 0.15.4",
