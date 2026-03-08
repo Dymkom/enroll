@@ -23,12 +23,12 @@ impl AppModel {
             .push(self.finger_button(Finger::LeftRing, 140.0))
             .push(self.finger_button(Finger::LeftMiddle, 150.0))
             .push(self.finger_button(Finger::LeftIndex, 130.0))
-            .push(self.finger_button(Finger::LeftThumb, 100.0))
+            .push(self.finger_button(Finger::LeftThumb, 40.0))
             .spacing(10)
             .align_y(Vertical::Bottom);
 
         let right_hand = widget::row()
-            .push(self.finger_button(Finger::RightThumb, 100.0))
+            .push(self.finger_button(Finger::RightThumb, 40.0))
             .push(self.finger_button(Finger::RightIndex, 130.0))
             .push(self.finger_button(Finger::RightMiddle, 150.0))
             .push(self.finger_button(Finger::RightRing, 140.0))
@@ -90,8 +90,7 @@ impl AppModel {
             label.push_str(" ]");
         }
 
-        button::custom_image_button(widget::icon::from_svg_bytes(FPRINT_ICON).icon(), None)
-            //.label(label)
+        button::text(label)
             .height(Length::Fixed(height))
             .on_press(Message::FingerSelected(finger.localized_name()))
             .into()
