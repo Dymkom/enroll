@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+
 pub(crate) use crate::accounts_dbus::{AccountsProxyBlocking, UserProxyBlocking};
 use cosmic::widget::{icon, nav_bar};
 use nix::unistd::{Uid, User};

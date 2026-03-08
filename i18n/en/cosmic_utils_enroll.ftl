@@ -3,8 +3,11 @@ about = About
 settings = Settings
 view = View
 fprint = Enroll
+ui = User Interface
 welcome = Register and/or delete fingerprints
 git-description = Git commit {$hash} on {$date}
+alternative-ui = Alternative UI
+
 register = Register
 delete = Delete
 deleted = Deleted fingerprint.
