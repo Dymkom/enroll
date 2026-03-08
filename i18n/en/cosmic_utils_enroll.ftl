@@ -9,7 +9,9 @@ git-description = Git commit {$hash} on {$date}
 alternative-ui = Alternative UI
 
 register = Register
+verify = Verify
 delete = Delete
+success = Success
 deleted = Deleted fingerprint.
 deleting = Deleting fingerprint...
 clear-device = Clear Device
@@ -18,6 +20,11 @@ clearing-device = Clearing all fingerprints from device for all known users...
 device-cleared = Device cleared for all known users.
 clear-device-confirm = Are you sure you want to clear fingerprints for ALL known users?
 cancel = Cancel
+
+register-tooltip = Registers a new fingerprint
+delete-tooltip = Deletes this fingerprint
+clear-tooltip = Clears all fingerprints for all known users
+verify-tooltip = Verifies the fingerprint against the enrolled fingerprints
 
 page-right-thumb = Right Thumb
 page-right-index-finger = Right Index Finger
