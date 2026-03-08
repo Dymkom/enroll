@@ -8,6 +8,7 @@ use crate::app::{ContextPage, MenuAction};
 use crate::config::Config;
 use crate::fl;
 
+use cosmic::Application;
 use cosmic::app::context_drawer;
 use cosmic::cosmic_config::{self, CosmicConfigEntry};
 use cosmic::iced::{Alignment, Subscription};
@@ -49,7 +50,7 @@ impl cosmic::Application for AppModel {
         _flags: Self::Flags,
     ) -> (Self, Task<cosmic::Action<Self::Message>>) {
         let (users, nav, selected_user) = initialize_users();
-        // Construct the app model with the runtime's core.
+
         let mut app = AppModel {
             core,
             context_page: ContextPage::About,
@@ -71,46 +72,9 @@ impl cosmic::Application for AppModel {
             confirm_clear: false,
         };
 
-        // Create a startup command that sets the window title.
-        let command = app.update_title();
-
-        // Start async task to connect to DBus
-        let connect_task = Task::perform(
-            async move {
-                match zbus::Connection::system().await {
-                    Ok(conn) => Message::ConnectionReady(conn),
-                    Err(e) => Message::OperationError(AppError::ConnectDbus(e.to_string())),
-                }
-            },
-            cosmic::Action::App,
-        );
-
-        let config_task = Task::perform(
-            async move {
-                let config = tokio::task::spawn_blocking(move || {
-                    cosmic_config::Config::new(Self::APP_ID, Config::VERSION)
-                        .map(|context| match Config::get_entry(&context) {
-                            Ok(config) => config,
-                            Err((errors, config)) => {
-                                for why in errors {
-                                    tracing::error!(%why, "error loading app config");
-                                }
-
-                                config
-                            }
-                        })
-                        .unwrap_or_default()
-                })
-                .await
-                .unwrap_or_else(|e| {
-                    tracing::error!("Config task join error: {}", e);
-                    Config::default()
-                });
-
-                Message::UpdateConfig(config)
-            },
-            cosmic::Action::App,
-        );
+        let command = app.update_title_task();
+        let connect_task = app.connect_task();
+        let config_task = app.config_task();
 
         (app, Task::batch(vec![command, connect_task, config_task]))
     }
@@ -301,7 +265,7 @@ impl cosmic::Application for AppModel {
             }
         }
 
-        Task::batch(vec![self.update_title(), self.list_fingers_task()])
+        Task::batch(vec![self.update_title_task(), self.list_fingers_task()])
     }
 }
 
@@ -378,8 +342,51 @@ impl AppModel {
         Task::none()
     }
 
+    /// Task that connects to DBus
+    pub fn connect_task(&self) -> Task<cosmic::Action<Message>> {
+        Task::perform(
+            async move {
+                match zbus::Connection::system().await {
+                    Ok(conn) => Message::ConnectionReady(conn),
+                    Err(e) => Message::OperationError(AppError::ConnectDbus(e.to_string())),
+                }
+            },
+            cosmic::Action::App,
+        )
+    }
+
+    /// Task to parses the configuration
+    pub fn config_task(&self) -> Task<cosmic::Action<Message>> {
+        Task::perform(
+            async move {
+                let config = tokio::task::spawn_blocking(move || {
+                    cosmic_config::Config::new(Self::APP_ID, Config::VERSION)
+                        .map(|context| match Config::get_entry(&context) {
+                            Ok(config) => config,
+                            Err((errors, config)) => {
+                                for why in errors {
+                                    tracing::error!(%why, "error loading app config");
+                                }
+
+                                config
+                            }
+                        })
+                        .unwrap_or_default()
+                })
+                .await
+                .unwrap_or_else(|e| {
+                    tracing::error!("Config task join error: {}", e);
+                    Config::default()
+                });
+
+                Message::UpdateConfig(config)
+            },
+            cosmic::Action::App,
+        )
+    }
+
     /// Updates the header and window titles.
-    pub fn update_title(&mut self) -> Task<cosmic::Action<Message>> {
+    fn update_title_task(&mut self) -> Task<cosmic::Action<Message>> {
         let mut window_title = fl!("app-title");
 
         if let Some(page) = self.nav.text(self.nav.active()) {
