@@ -7,8 +7,7 @@ use crate::fl;
 use cosmic::iced::Length;
 use cosmic::iced::alignment::{Horizontal, Vertical};
 use cosmic::iced_widget::pick_list;
-use cosmic::widget;
-use cosmic::widget::{button, column, container, progress_bar, svg, text};
+use cosmic::widget::{button, column, container, progress_bar, row, svg, text};
 use cosmic::{Apply, Element};
 const FPRINT_ICON: &[u8] = include_bytes!("../../resources/icons/hicolor/scalable/apps/fprint.svg");
 const STATUS_TEXT_SIZE: u16 = 16;
@@ -18,7 +17,7 @@ pub(crate) const MAIN_SPACING: u16 = 20;
 
 impl AppModel {
     pub(crate) fn view_experimental(&self) -> Element<'_, Message> {
-        let left_hand = widget::row()
+        let left_hand = row()
             .push(self.finger_button(Finger::LeftPinky, 110.0))
             .push(self.finger_button(Finger::LeftRing, 140.0))
             .push(self.finger_button(Finger::LeftMiddle, 150.0))
@@ -27,7 +26,7 @@ impl AppModel {
             .spacing(10)
             .align_y(Vertical::Bottom);
 
-        let right_hand = widget::row()
+        let right_hand = row()
             .push(self.finger_button(Finger::RightThumb, 40.0))
             .push(self.finger_button(Finger::RightIndex, 130.0))
             .push(self.finger_button(Finger::RightMiddle, 150.0))
@@ -36,28 +35,38 @@ impl AppModel {
             .spacing(10)
             .align_y(Vertical::Bottom);
 
-        // let hands = widget::row()
-        //     .push(left_hand)
-        //     .push(right_hand)
-        //     .spacing(50)
-        //     .align_y(Vertical::Bottom);
+        let mut column = column();
 
-        let mut column = column()
-            .push(
-                container(left_hand)
-                    .width(Length::Fill)
-                    .align_x(Horizontal::Center)
-                    .align_y(Vertical::Center)
-                    .padding(MAIN_PADDING),
-            )
-            .push(
-                container(right_hand)
+        if self.core.is_condensed() {
+            column = column
+                .push(
+                    container(left_hand)
+                        .width(Length::Fill)
+                        .align_x(Horizontal::Center)
+                        .align_y(Vertical::Center)
+                        .padding(MAIN_PADDING),
+                )
+                .push(
+                    container(right_hand)
+                        .width(Length::Fill)
+                        .align_x(Horizontal::Center)
+                        .align_y(Vertical::Center)
+                        .padding(MAIN_PADDING),
+                );
+        } else {
+            let hands = row()
+                .push(left_hand)
+                .push(right_hand)
+                .spacing(50)
+                .align_y(Vertical::Bottom);
+            column = column.push(
+                container(hands)
                     .width(Length::Fill)
                     .align_x(Horizontal::Center)
                     .align_y(Vertical::Center)
                     .padding(MAIN_PADDING),
             );
-
+        }
         column = column.push(self.view_status());
 
         if let Some(progress) = self.view_progress() {
@@ -77,22 +86,21 @@ impl AppModel {
         let is_enrolled = finger
             .as_finger_id()
             .is_some_and(|id| self.enrolled_fingers.iter().any(|ef| ef == id));
-
-        let mut label = String::new();
+        let mut svg = svg(svg::Handle::from_memory(FPRINT_ICON));
+        let mut label = finger.localized_name();
         if is_enrolled {
-            label.push_str("✓ ");
-        }
-        if is_selected {
-            label.push_str("[ ");
-        }
-        label.push_str(&finger.localized_name());
-        if is_selected {
-            label.push_str(" ]");
+            label.push_str(" ✓");
+            svg = svg.symbolic(true);
         }
 
-        button::text(label)
+        button::custom_image_button(svg, None)
+            .width(40)
             .height(Length::Fixed(height))
             .on_press(Message::FingerSelected(finger.localized_name()))
+            .selected(is_selected)
+            .description(label)
+            //.name(label)
+            //.tooltip(label)
             .into()
     }
 
@@ -157,7 +165,7 @@ impl AppModel {
     pub(crate) fn view_status(&self) -> Element<'_, Message> {
         text(&self.status)
             .size(STATUS_TEXT_SIZE)
-            .apply(widget::container)
+            .apply(container)
             .width(Length::Fill)
             .align_x(Horizontal::Center)
             .into()
@@ -219,7 +227,7 @@ impl AppModel {
             cancel_btn = cancel_btn.on_press(Message::EnrollStop);
         }
 
-        let mut row = widget::row()
+        let mut row = row()
             .push(register_btn)
             .push(verify_btn)
             .push(delete_btn)
@@ -229,7 +237,7 @@ impl AppModel {
             row = row.push(cancel_btn);
         }
 
-        row.apply(widget::container)
+        row.apply(container)
             .width(Length::Fill)
             .height(Length::Fill)
             .align_x(Horizontal::Center)
