@@ -23,10 +23,16 @@ pub trait Device {
     fn delete_enrolled_fingers2(&self) -> zbus::Result<()>;
     fn enroll_start(&self, finger_name: &str) -> zbus::Result<()>;
     fn enroll_stop(&self) -> zbus::Result<()>;
-    fn verify_finger(&self, finger_name: &str) -> zbus::Result<()>;
+    fn verify_start(&self, finger_name: &str) -> zbus::Result<()>;
+    fn verify_stop(&self) -> zbus::Result<()>;
+    #[zbus(signal)]
+    fn verify_finger_selected(&self, finger_name: &str) -> zbus::Result<()>;
 
     #[zbus(signal)]
     fn enroll_status(&self, result: String, done: bool) -> zbus::Result<()>;
+
+    #[zbus(signal)]
+    fn verify_status(&self, result: String, done: bool) -> zbus::Result<()>;
 
     #[zbus(property, name = "num-enroll-stages")]
     fn num_enroll_stages(&self) -> zbus::Result<i32>;
