@@ -224,13 +224,13 @@ pub async fn verify_finger_dbus(
     while let Some(signal) = status_stream.next().await {
         match signal.args() {
             Ok(args) => {
-                let result: String = args.result;
+                let _result: String = args.result;
                 let done: bool = args.done;
                 if done {
                     break;
                 }
             }
-            Err(e) => {
+            Err(_e) => {
                 break;
             }
         }

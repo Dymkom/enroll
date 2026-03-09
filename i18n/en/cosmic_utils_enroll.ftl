@@ -21,7 +21,7 @@ clear-device-confirm = Are you sure you want to clear fingerprints for ALL known
 cancel = Cancel
 
 settings-ui = User Interface
-settings-clear-device = Clear whole device
+settings-clear-device = Remove all fingerprints
 
 register-tooltip = Registers a new fingerprint
 delete-tooltip = Deletes this fingerprint

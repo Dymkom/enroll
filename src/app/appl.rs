@@ -149,7 +149,7 @@ impl cosmic::Application for AppModel {
     /// Chooses which view to render based on config
     fn view(&self) -> Element<'_, Self::Message> {
         if self.config.experimental_ui {
-            self.view_experimental()
+            self.view_old()
         } else {
             self.view_main()
         }

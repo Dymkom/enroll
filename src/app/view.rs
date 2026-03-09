@@ -11,12 +11,11 @@ use cosmic::widget::{button, column, container, progress_bar, row, svg, text};
 use cosmic::{Apply, Element};
 const FPRINT_ICON: &[u8] = include_bytes!("../../resources/icons/hicolor/scalable/apps/fprint.svg");
 const STATUS_TEXT_SIZE: u16 = 16;
-const PROGRESS_BAR_HEIGHT: u16 = 10;
 pub(crate) const MAIN_PADDING: u16 = 20;
 pub(crate) const MAIN_SPACING: u16 = 20;
 
 impl AppModel {
-    pub(crate) fn view_experimental(&self) -> Element<'_, Message> {
+    pub(crate) fn view_main(&self) -> Element<'_, Message> {
         let left_hand = row()
             .push(self.finger_button(Finger::LeftPinky, 110.0))
             .push(self.finger_button(Finger::LeftRing, 140.0))
@@ -86,11 +85,10 @@ impl AppModel {
         let is_enrolled = finger
             .as_finger_id()
             .is_some_and(|id| self.enrolled_fingers.iter().any(|ef| ef == id));
-        let mut svg = svg(svg::Handle::from_memory(FPRINT_ICON));
+        let svg = svg(svg::Handle::from_memory(FPRINT_ICON));
         let mut label = finger.localized_name();
         if is_enrolled {
             label.push_str(" ✓");
-            svg = svg.symbolic(true);
         }
 
         button::custom_image_button(svg, None)
@@ -99,12 +97,12 @@ impl AppModel {
             .on_press(Message::FingerSelected(finger.localized_name()))
             .selected(is_selected)
             .description(label)
-            //.name(label)
+            //.label(label)
             //.tooltip(label)
             .into()
     }
 
-    pub(crate) fn view_main(&self) -> Element<'_, Message> {
+    pub(crate) fn view_old(&self) -> Element<'_, Message> {
         let mut column = column().push(self.view_header()).push(self.view_status());
 
         if let Some(picker) = self.view_finger_picker() {
