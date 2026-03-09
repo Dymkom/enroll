@@ -28,6 +28,16 @@ delete-tooltip = Deletes this fingerprint
 clear-tooltip = Only works for still existing users
 verify-tooltip = Verifies the fingerprint against the enrolled fingerprints
 
+verify-finger = Place {$finger} on reader
+verify-no-match = Fingerprint did not match
+verify-match = Fingerprint matched
+verify-swipe-too-short = Swipe was too short. Try again.
+verify-finger-not-centered = Finger was not centered. Try again.
+verify-remove-and-retry = Remove finger and try again.
+verify-too-fast = Too fast touch. Try again.
+verify-disconnected = Device disconnected. Close window.
+verify-unknown-error = There was an unknown error.
+
 page-right-thumb = Right Thumb
 page-right-index-finger = Right Index Finger
 page-right-middle-finger = Right Middle Finger
