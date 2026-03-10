@@ -15,6 +15,7 @@ pub(crate) const MAIN_PADDING: u16 = 20;
 pub(crate) const MAIN_SPACING: u16 = 20;
 
 impl AppModel {
+    /// **Returns** column with default UI of the application
     pub(crate) fn view_main(&self) -> Element<'_, Message> {
         let left_hand = row()
             .push(self.finger_button(Finger::LeftPinky, 110.0))
@@ -80,6 +81,7 @@ impl AppModel {
             .into()
     }
 
+    /// Constructs custom_image_buttons for main UI
     fn finger_button(&self, finger: Finger, height: f32) -> Element<'_, Message> {
         let is_selected = self.selected_finger == finger;
         let is_enrolled = finger
@@ -98,10 +100,10 @@ impl AppModel {
             .height(Length::Fixed(height))
             .on_press(Message::FingerSelected(finger.localized_name()))
             .selected(is_selected)
-            //.description(label)
             .into()
     }
 
+    /// The first UI version which can still be enabled from Settings
     pub(crate) fn view_old(&self) -> Element<'_, Message> {
         let mut column = column().push(self.view_header()).push(self.view_status());
 
@@ -122,6 +124,7 @@ impl AppModel {
             .into()
     }
 
+    /// Title for the traditional UI
     pub(crate) fn view_header(&self) -> Element<'_, Message> {
         text::title1(fl!("app-title"))
             .apply(container)
@@ -132,6 +135,7 @@ impl AppModel {
             .into()
     }
 
+    /// Dropdown menu from which to choose which finger is registered
     pub(crate) fn view_finger_picker(&self) -> Option<Element<'_, Message>> {
         let mut vec = Vec::new();
 
@@ -153,6 +157,7 @@ impl AppModel {
         )
     }
 
+    /// **Returns** icon for traditional UI
     pub(crate) fn view_icon(&self) -> Element<'_, Message> {
         svg(svg::Handle::from_memory(FPRINT_ICON))
             .symbolic(true)
@@ -161,6 +166,7 @@ impl AppModel {
             .into()
     }
 
+    /// **Returns** status state in a text widget
     pub(crate) fn view_status(&self) -> Element<'_, Message> {
         text(&self.status)
             .size(STATUS_TEXT_SIZE)
@@ -170,6 +176,8 @@ impl AppModel {
             .into()
     }
 
+    /// **Returns** bar reflecting how many succesful attempts away
+    /// enrolling print is
     pub(crate) fn view_progress(&self) -> Option<Element<'_, Message>> {
         self.enrolling_finger.as_ref()?;
 
@@ -177,6 +185,7 @@ impl AppModel {
             .map(|total| progress_bar(0.0..=(total as f32), self.enroll_progress as f32).into())
     }
 
+    /// **Returns** row of buttons which provide control over operations
     pub(crate) fn view_controls(&self) -> Element<'_, Message> {
         let buttons_enabled =
             !self.busy && self.device_path.is_some() && self.enrolling_finger.is_none();
