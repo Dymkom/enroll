@@ -213,19 +213,7 @@ impl AppModel {
         if done {
             self.busy = false;
             self.verifying_finger = false;
-            if status == "verify-match" {
-                return self.on_success();
-            }
         }
-        Task::none()
-    }
-
-    /// Sets the status to success and resets busy state
-    ///
-    /// **Returns** ***Task***()
-    pub(crate) fn on_success(&mut self) -> Task<cosmic::Action<Message>> {
-        self.status = fl!("success");
-        self.busy = false;
         Task::none()
     }
 
