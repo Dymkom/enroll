@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
 use crate::app::tasks::{task_config, task_connect};
-use crate::app::{error::*, finger::*, fprint::*, users::*};
+use crate::app::{error::*, finger::*, fprint::*, subscription::*, users::*};
 
 use crate::app::message::{Message, REPOSITORY};
 use crate::app::{ContextPage, MenuAction};
 use crate::config::Config;
 use crate::fl;
 
-use cosmic::{app::context_drawer, iced::futures::channel::mpsc::Sender};
+use cosmic::app::context_drawer;
 
 use cosmic::iced::{Alignment, Subscription};
 use cosmic::{
@@ -18,7 +18,6 @@ use cosmic::{
 };
 
 use super::AppModel;
-use futures_util::SinkExt;
 use std::collections::HashMap;
 
 const APP_ICON: &[u8] = include_bytes!("../../resources/icons/hicolor/scalable/apps/enroll.svg");
@@ -190,51 +189,14 @@ impl cosmic::Application for AppModel {
             &self.connection,
             &self.selected_user,
         ) {
-            #[derive(Clone)]
-            struct EnrollData {
-                finger_name: std::sync::Arc<String>,
-                device_path: std::sync::Arc<zbus::zvariant::OwnedObjectPath>,
-                connection: zbus::Connection,
-                username: std::sync::Arc<String>,
-            }
+            let data = EnrollData::new(
+                finger_name.clone(),
+                device_path.clone(),
+                connection.clone(),
+                user.username.clone(),
+            );
 
-            impl std::hash::Hash for EnrollData {
-                fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-                    self.finger_name.hash(state);
-                    self.username.hash(state);
-                }
-            }
-
-            let data = EnrollData {
-                finger_name: finger_name.clone(),
-                device_path: device_path.clone(),
-                connection: connection.clone(),
-                username: user.username.clone(),
-            };
-
-            subscriptions.push(Subscription::run_with(data, |data| {
-                let data = data.clone();
-                cosmic::iced::stream::channel(100, move |mut output: Sender<Message>| async move {
-                    // Implement enrollment stream here
-                    match enroll_fingerprint_process(
-                        data.connection,
-                        &data.device_path,
-                        &data.finger_name,
-                        &data.username,
-                        &mut output,
-                    )
-                    .await
-                    {
-                        Ok(_) => {}
-                        Err(e) => {
-                            let _ = output
-                                .send(Message::OperationError(AppError::from(e)))
-                                .await;
-                        }
-                    }
-                    futures_util::future::pending().await
-                })
-            }));
+            subscriptions.push(enroll_subscription(data));
         }
 
         // Add verify subscription if verifying
@@ -242,57 +204,17 @@ impl cosmic::Application for AppModel {
             && let (Some(device_path), Some(connection), Some(user)) =
                 (&self.device_path, &self.connection, &self.selected_user)
         {
-            #[derive(Clone)]
-            struct VerifyData {
-                device_path: std::sync::Arc<zbus::zvariant::OwnedObjectPath>,
-                connection: zbus::Connection,
-                username: std::sync::Arc<String>,
-                finger: String,
-            }
-
-            impl std::hash::Hash for VerifyData {
-                fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-                    self.username.hash(state);
-                    self.finger.hash(state);
-                }
-            }
-
-            let data = VerifyData {
-                device_path: device_path.clone(),
-                connection: connection.clone(),
-                username: user.username.clone(),
-                finger: self
-                    .selected_finger
+            let data = VerifyData::new(
+                device_path.clone(),
+                connection.clone(),
+                user.username.clone(),
+                self.selected_finger
                     .as_finger_id()
                     .unwrap_or_default()
                     .to_string(),
-            };
+            );
 
-            subscriptions.push(Subscription::run_with(data, |data| {
-                let data = data.clone();
-                cosmic::iced::stream::channel(100, move |mut output: Sender<Message>| async move {
-                    let path = (*data.device_path).clone();
-                    let username = (*data.username).clone();
-
-                    match verify_finger_process(
-                        &data.connection,
-                        path,
-                        data.finger,
-                        username,
-                        &mut output,
-                    )
-                    .await
-                    {
-                        Ok(_) => {}
-                        Err(e) => {
-                            let _ = output
-                                .send(Message::OperationError(AppError::from(e)))
-                                .await;
-                        }
-                    }
-                    futures_util::future::pending().await
-                })
-            }));
+            subscriptions.push(verify_subscription(data));
         }
 
         Subscription::batch(subscriptions)

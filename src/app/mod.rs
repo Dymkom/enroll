@@ -14,6 +14,7 @@ pub mod error;
 pub mod finger;
 pub mod fprint;
 pub mod message;
+pub mod subscription;
 pub mod tasks;
 pub mod users;
 pub mod view;
