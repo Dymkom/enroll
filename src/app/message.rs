@@ -2,7 +2,7 @@
 
 use crate::app::AppModel;
 use crate::app::error::AppError;
-use crate::app::fprint::*;
+use crate::app::tasks::*;
 use crate::app::{ContextPage, Finger};
 use crate::config::Config;
 use crate::fl;
@@ -22,20 +22,20 @@ pub enum Message {
     LaunchUrl(String),
     Delete,
     Register,
-    Success,
     ConnectionReady(zbus::Connection),
     DeviceFound(Option<(zbus::zvariant::OwnedObjectPath, DeviceProxy<'static>)>),
     OperationError(AppError),
     EnrollStart(Option<u32>),
     EnrollStatus(String, bool),
     EnrollStop,
-    DeleteComplete,
+    DeleteComplete(bool),
     ClearDevice,
     CancelClear,
     ClearComplete(Result<(), AppError>),
     EnrolledFingers(Vec<String>),
     FingerSelected(String),
     VerifyFinger,
+    VerifyStatus(String, bool),
 }
 
 // Section for handling of Messages
@@ -115,6 +115,10 @@ impl AppModel {
     /// **Returns** ***Task***()
     pub(crate) fn on_error(&mut self, err: AppError) -> Task<cosmic::Action<Message>> {
         self.status = err.localized_message();
+        if self.status == fl!("error-no-enrolled-prints") {
+            self.enrolled_fingers.clear();
+            self.status = fl!("success");
+        }
         self.busy = false;
         self.enrolling_finger = None;
         Task::none()
@@ -178,32 +182,42 @@ impl AppModel {
 
     /// Called to request verification of the selected print
     ///
-    /// **Returns** either ***Task***() or ***task_verify_finger***()
+    /// **Returns** ***Task***()
     pub(crate) fn on_verify_finger(&mut self) -> Task<cosmic::Action<Message>> {
-        if let (Some(path), Some(conn), Some(user)) = (
-            self.device_path.clone(),
-            self.connection.clone(),
-            self.selected_user.clone(),
-        ) {
-            self.busy = true;
-            let path = (*path).clone();
-            let username = user.username.to_string();
-            let finger = self
-                .selected_finger
-                .as_finger_id()
-                .unwrap_or_default()
-                .to_string();
-            return task_verify_finger(path, username, finger, conn);
-        }
+        self.busy = true;
+        self.verifying_finger = true;
+        self.status = fl!("status-starting-verification");
         Task::none()
     }
 
-    /// Sets the status to success and resets busy state
+    /// Handles verification status updates
     ///
     /// **Returns** ***Task***()
-    pub(crate) fn on_success(&mut self) -> Task<cosmic::Action<Message>> {
-        self.status = fl!("success");
-        self.busy = false;
+    pub(crate) fn on_verify_status(
+        &mut self,
+        status: String,
+        done: bool,
+    ) -> Task<cosmic::Action<Message>> {
+        // Here you could map verify-* strings to localized messages
+        // Currently we'll fallback to showing the string directly or success message if done
+        let status_msg = match status.as_str() {
+            "verify-match" => fl!("verify-match"),
+            "verify-no-match" => fl!("verify-no-match"),
+            "verify-retry-scan" => fl!("verify-retry-scan"),
+            "verify-swipe-too-short" => fl!("verify-swipe-too-short"),
+            "verify-finger-not-centered" => fl!("verify-finger-not-centered"),
+            "verify-remove-and-retry" => fl!("verify-remove-and-retry"),
+            "verify-too-fast" => fl!("verify-too-fast"),
+            "verify-disconnected" => fl!("verify-disconnected"),
+            "verify-unknown-error" => fl!("verify-unknown-error"),
+            _ => status.clone(),
+        };
+        self.status = status_msg;
+
+        if done {
+            self.busy = false;
+            self.verifying_finger = false;
+        }
         Task::none()
     }
 
@@ -317,16 +331,16 @@ impl AppModel {
     /// Set state when deletion of prints was succesful and removes from enrolled_fingers
     ///
     /// **Returns** ***Task***()
-    pub(crate) fn on_delete_complete(&mut self) -> Task<cosmic::Action<Message>> {
+    pub(crate) fn on_delete_complete(&mut self, clear: bool) -> Task<cosmic::Action<Message>> {
         self.status = fl!("deleted");
         self.busy = false;
-        if let Some(page) = self.nav.data::<Finger>(self.nav.active()) {
-            if let Some(finger_id) = page.as_finger_id() {
-                self.enrolled_fingers.retain(|f| f != finger_id);
-            } else {
-                self.enrolled_fingers.clear();
-            }
+
+        if clear {
+            self.enrolled_fingers.clear();
+        } else {
+            self.enrolled_fingers.retain(|f| f != self.selected_finger.as_finger_id().unwrap());
         }
+
         Task::none()
     }
 
@@ -362,99 +376,16 @@ impl AppModel {
         self.config = config.clone();
 
         tokio::task::spawn_blocking(move || {
-            use cosmic::cosmic_config::{self, CosmicConfigEntry};
             use cosmic::Application;
+            use cosmic::cosmic_config::{self, CosmicConfigEntry};
 
-            if let Ok(context) = cosmic_config::Config::new(AppModel::APP_ID, Config::VERSION) {
-                if let Err(err) = config.write_entry(&context) {
-                    tracing::error!("failed to write config: {}", err);
-                }
+            if let Ok(context) = cosmic_config::Config::new(AppModel::APP_ID, Config::VERSION)
+                && let Err(err) = config.write_entry(&context)
+            {
+                tracing::error!("failed to write config: {}", err);
             }
         });
 
         Task::none()
     }
-}
-
-fn task_delete_prints(path: zbus::zvariant::OwnedObjectPath, username: String, conn: zbus::Connection) -> Task<cosmic::Action<Message>> {
-    Task::perform(
-        async move {
-            match delete_fingers(&conn, path, username).await {
-                Ok(_) => Message::DeleteComplete,
-                Err(e) => Message::OperationError(AppError::from(e)),
-            }
-        },
-        cosmic::Action::App,
-    )
-}
-
-fn task_delete_print(path: zbus::zvariant::OwnedObjectPath, username: String, finger_name: String, conn: zbus::Connection) -> Task<cosmic::Action<Message>> {
-    Task::perform(
-        async move {
-            match delete_fingerprint_dbus(&conn, path, finger_name, username).await {
-                Ok(_) => Message::DeleteComplete,
-                Err(e) => Message::OperationError(AppError::from(e)),
-            }
-        },
-        cosmic::Action::App,
-    )
-}
-
-fn task_enroll_stop(path: zbus::zvariant::OwnedObjectPath, conn: zbus::Connection) -> Task<cosmic::Action<Message>> {
-    Task::perform(
-        async move {
-            let device = DeviceProxy::builder(&conn).path(path)?.build().await?;
-            let _ = device.enroll_stop().await;
-            device.release().await?;
-            Ok::<(), zbus::Error>(())
-        },
-        |res| match res {
-            Ok(_) => cosmic::Action::App(Message::EnrollStatus(
-                "enroll-cancelled".to_string(),
-                true,
-            )),
-            Err(e) => cosmic::Action::App(Message::OperationError(AppError::from(e))),
-        },
-    )
-}
-
-fn task_verify_finger(path: zbus::zvariant::OwnedObjectPath, username: String, finger: String, conn: zbus::Connection) -> Task<cosmic::Action<Message>> {
-    Task::perform(
-        async move { verify_finger_dbus(&conn, path, finger, username).await },
-        |res| match res {
-            Ok(()) => cosmic::Action::App(Message::Success),
-            Err(e) => cosmic::Action::App(Message::OperationError(AppError::from(e))),
-        },
-    )
-}
-
-fn task_clear_device(path: zbus::zvariant::OwnedObjectPath, usernames: Vec<String>, conn: zbus::Connection) -> Task<cosmic::Action<Message>> {
-    Task::perform(
-        async move {
-            match clear_all_fingers_dbus(&conn, path, usernames).await {
-                Ok(_) => Message::ClearComplete(Ok(())),
-                Err(e) => Message::ClearComplete(Err(AppError::from(e))),
-            }
-        },
-        cosmic::Action::App,
-    )
-}
-
-fn task_find_device(conn_clone: zbus::Connection) -> Task<cosmic::Action<Message>> {
-    Task::perform(
-        async move {
-            match find_device(&conn_clone).await {
-                Ok((path, proxy)) => Message::DeviceFound(Some((path, proxy))),
-                Err(e) => {
-                    let error = AppError::from(e);
-                    if matches!(error, AppError::Unknown(_)) {
-                        Message::OperationError(AppError::DeviceNotFound)
-                    } else {
-                        Message::OperationError(error)
-                    }
-                }
-            }
-        },
-        cosmic::Action::App,
-    )
 }

@@ -75,7 +75,6 @@ mod tests {
             .unwrap();
 
         let error_name = ErrorName::try_from(name).unwrap();
-        // zbus::Error::MethodError(OwnedErrorName, Option<String>, Message)
         zbus::Error::MethodError(error_name.into(), None, msg)
     }
 

@@ -37,7 +37,7 @@ pub async fn find_device(
 /// ***net.reactivated.Fprint.Error.Internal:***
 /// if the device couldn't be claimed
 pub async fn list_enrolled_fingers_dbus(
-    device: &DeviceProxy<'static>,
+    device: DeviceProxy<'static>,
     username: String,
 ) -> zbus::Result<Vec<String>> {
     validate_username(&username)?;
@@ -256,16 +256,29 @@ where
 /// if there are no enrolled prints for the chosen user
 /// ***net.reactivated.Fprint.Error.Internal:***
 /// if there was an internal error
-pub async fn verify_finger_dbus(
+pub async fn verify_finger_process<S>(
     connection: &zbus::Connection,
     path: zbus::zvariant::OwnedObjectPath,
     finger: String,
     username: String,
-) -> zbus::Result<()> {
+    output: &mut S,
+) -> zbus::Result<()>
+where
+    S: Sink<Message> + Unpin + Send,
+    S::Error: std::fmt::Debug + Send,
+{
     validate_username(&username)?;
     let device = DeviceProxy::builder(connection).path(path)?.build().await?;
 
-    device.claim(&username).await?;
+    match device.claim(&username).await {
+        Ok(_) => {}
+        Err(e) => return Err(e),
+    };
+
+    if let Err(e) = device.verify_start(&finger).await {
+        let _ = device.release().await;
+        return Err(e);
+    }
 
     let mut status_stream = match device.receive_verify_status().await {
         Ok(s) => s,
@@ -275,22 +288,24 @@ pub async fn verify_finger_dbus(
         }
     };
 
-    if let Err(e) = device.verify_start(&finger).await {
-        let _ = device.release().await;
-        return Err(e);
-    }
-
-    // TODO: send reference to self and implement Message::VerifyStatus(String)
     while let Some(signal) = status_stream.next().await {
         match signal.args() {
             Ok(args) => {
-                let _result: String = args.result;
+                let result: String = args.result;
                 let done: bool = args.done;
+
+                let _ = output.send(Message::VerifyStatus(result, done)).await;
+
                 if done {
                     break;
                 }
             }
             Err(_e) => {
+                let _ = output
+                    .send(Message::OperationError(AppError::Unknown(
+                        "Failed to parse signal".to_string(),
+                    )))
+                    .await;
                 break;
             }
         }

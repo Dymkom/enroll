@@ -2,7 +2,7 @@
 Name=Enroll
 Comment=Manage fingerprints
 Type=Application
-Icon=org.cosmic_utils.Enroll
+Icon=org.cosmic_utils.enroll
 Exec=cosmic-utils-enroll %F
 Terminal=false
 StartupNotify=true
