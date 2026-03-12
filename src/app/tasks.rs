@@ -17,7 +17,7 @@ pub fn task_delete_prints(
     Task::perform(
         async move {
             match delete_fingers(&conn, path, username).await {
-                Ok(_) => Message::DeleteComplete,
+                Ok(_) => Message::DeleteComplete(true),
                 Err(e) => Message::OperationError(AppError::from(e)),
             }
         },
@@ -37,7 +37,7 @@ pub fn task_delete_print(
     Task::perform(
         async move {
             match delete_fingerprint_dbus(&conn, path, finger_name, username).await {
-                Ok(_) => Message::DeleteComplete,
+                Ok(_) => Message::DeleteComplete(false),
                 Err(e) => Message::OperationError(AppError::from(e)),
             }
         },

@@ -28,7 +28,7 @@ pub enum Message {
     EnrollStart(Option<u32>),
     EnrollStatus(String, bool),
     EnrollStop,
-    DeleteComplete,
+    DeleteComplete(bool),
     ClearDevice,
     CancelClear,
     ClearComplete(Result<(), AppError>),
@@ -327,16 +327,16 @@ impl AppModel {
     /// Set state when deletion of prints was succesful and removes from enrolled_fingers
     ///
     /// **Returns** ***Task***()
-    pub(crate) fn on_delete_complete(&mut self) -> Task<cosmic::Action<Message>> {
+    pub(crate) fn on_delete_complete(&mut self, clear: bool) -> Task<cosmic::Action<Message>> {
         self.status = fl!("deleted");
         self.busy = false;
-        if let Some(page) = self.nav.data::<Finger>(self.nav.active()) {
-            if let Some(finger_id) = page.as_finger_id() {
-                self.enrolled_fingers.retain(|f| f != finger_id);
-            } else {
-                self.enrolled_fingers.clear();
-            }
+
+        if clear {
+            self.enrolled_fingers.clear();
+        } else {
+            self.enrolled_fingers.retain(|f| f != &self.selected_finger.localized_name());
         }
+
         Task::none()
     }
 

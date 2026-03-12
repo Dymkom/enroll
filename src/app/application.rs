@@ -234,7 +234,7 @@ impl cosmic::Application for AppModel {
             Message::EnrollStart(total) => self.on_enroll_start(total),
             Message::EnrollStatus(status, done) => self.on_enroll_status(status, done),
             Message::EnrollStop => self.on_enroll_stop(),
-            Message::DeleteComplete => self.on_delete_complete(),
+            Message::DeleteComplete(clear) => self.on_delete_complete(clear),
             Message::Delete => self.on_delete(),
             Message::ClearDevice => self.on_clear_device(),
             Message::CancelClear => self.on_cancel_clear(),
