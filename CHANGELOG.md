@@ -1,3 +1,6 @@
+### 1.0.1:
+  - Changed navigation bar default toggle state
+  - Pushed Cargo.lock for Flathub
 ### 1.0.0:
 	• First fully featured release
 	• Adds Settings section for installing dependencies
