@@ -46,11 +46,11 @@ impl cosmic::Application for AppModel {
 
     /// Initializes the application with any given flags and startup commands.
     fn init(
-        core: cosmic::Core,
+        mut core: cosmic::Core,
         _flags: Self::Flags,
     ) -> (Self, Task<cosmic::Action<Self::Message>>) {
         let (users, nav, selected_user) = initialize_users();
-
+        core.nav_bar_toggle();
         let mut app = AppModel {
             core,
             context_page: ContextPage::About,

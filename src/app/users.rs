@@ -37,6 +37,7 @@ pub fn initialize_users() -> (Vec<UserOption>, nav_bar::Model, Option<UserOption
 
     // TODO: to use actual icon need custom nav
     let mut nav = nav_bar::Model::default();
+
     let mut selected_user = None;
     let current_username = User::from_uid(Uid::current())
         .ok()
