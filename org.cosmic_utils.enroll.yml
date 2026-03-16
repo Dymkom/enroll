@@ -2,17 +2,18 @@ app-id: org.cosmic_utils.enroll
 runtime: org.freedesktop.Platform
 runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
+base: com.system76.Cosmic.BaseApp
+base-version: stable
 command: cosmic-utils-enroll
 finish-args:
   - --socket=wayland
   - --socket=fallback-x11
   - --share=ipc
   - --device=dri
-  # Allow talking to fprintd
   - --system-talk-name=net.reactivated.Fprint
-  # Allow talking to PolicyKit for authentication
   - --system-talk-name=org.freedesktop.PolicyKit1
-
+  - --system-talk-name=org.freedesktop.Accounts
+  - --talk-name=com.system76.CosmicSettingsDaemon
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
 
@@ -25,23 +26,16 @@ modules:
   - name: cosmic-utils-enroll
     buildsystem: simple
     build-commands:
-      # Build the application
+      - cargo --offline fetch --manifest-path Cargo.toml
       - cargo build --offline --release
 
-      # Install the binary
       - install -Dm0755 target/release/cosmic-utils-enroll /app/bin/cosmic-utils-enroll
-
-      # Install the desktop file
       - install -Dm0644 resources/org.cosmic_utils.enroll.desktop /app/share/applications/org.cosmic_utils.enroll.desktop
-
-      # Install the AppStream metadata
       - install -Dm0644 resources/org.cosmic_utils.enroll.metainfo.xml /app/share/appdata/org.cosmic_utils.enroll.metainfo.xml
-
-      # Install the icon
       - install -Dm0644 resources/icons/hicolor/scalable/apps/enroll.svg /app/share/icons/hicolor/scalable/apps/org.cosmic_utils.enroll.svg
 
     sources:
       - type: git
         url: https://github.com/cosmic-utils/enroll.git
-        tag: 1.0.0
+        tag: 1.0.2
       - cargo-sources.json

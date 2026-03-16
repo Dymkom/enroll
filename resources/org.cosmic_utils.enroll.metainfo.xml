@@ -18,9 +18,7 @@
   </icon>
   <launchable type="desktop-id">org.cosmic_utils.enroll.desktop</launchable>
   <provides>
-    <binaries>
       <binary>cosmic-utils-enroll</binary>
-    </binaries>
   </provides>
   <requires>
     <display_length compare="ge">360</display_length>
@@ -32,6 +30,7 @@
   </supports>
   <categories>
     <category>Utility</category>
+    <category>System</category>
     <category>COSMIC</category>
   </categories>
   <keywords>
@@ -56,7 +55,7 @@
     </screenshot>
   </screenshots>
   <releases>
-    <release version="1.0.0" date="2026-03-12">
+    <release version="1.0.2" date="2026-03-16">
       <description>
         <p>Initial release.</p>
       </description>

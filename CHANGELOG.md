@@ -1,3 +1,6 @@
+### 1.0.2:
+  - Fixes Verify being active for unenrolled fingers
+  - Add cargo-source.json for Flathub
 ### 1.0.1:
   - Changed navigation bar default toggle state
   - Pushed Cargo.lock for Flathub

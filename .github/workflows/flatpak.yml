@@ -41,6 +41,6 @@ jobs:
           name: ${{ env.VERSION }}
           files: cosmic-utils-enroll.flatpak
           draft: false
-          prerelease: true
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
