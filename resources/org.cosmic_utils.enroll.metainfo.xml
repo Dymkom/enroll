@@ -46,8 +46,12 @@
   <url type="vcs-browser">https://github.com/cosmic-utils/enroll</url>
   <screenshots>
     <screenshot type="default">
+    <image>https://user.fm/files/v2-33b0fc7cc6603b601fe9ec2b84915fd8/enroll.png</image>
+    <caption>Main window main UI</caption>
+    </screenshot>
+    <screenshot>
       <image>https://user.fm/files/v2-2f0daf05b0e66f25db2778188ab82373/enroll-main.png</image>
-      <caption>Main window</caption>
+      <caption>Main window alternative UI</caption>
     </screenshot>
     <screenshot>
       <image>https://user.fm/files/v2-808d13b70d649c6b65df2cce1849db2f/enroll-additional.png</image>
@@ -55,7 +59,7 @@
     </screenshot>
   </screenshots>
   <releases>
-    <release version="1.0.2" date="2026-03-16">
+    <release version="1.0.3" date="2026-03-17">
       <description>
         <p>Initial release.</p>
       </description>
