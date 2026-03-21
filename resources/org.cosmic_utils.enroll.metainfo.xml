@@ -1,16 +1,16 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <component type="desktop-application">
   <id>org.cosmic_utils.enroll</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MPL-2.0</project_license>
   <name>Enroll</name>
-  <summary>GUI built with COSMIC toolkit for fprintd fingerprint enrolling</summary>
+  <summary>Fingerprint record management</summary>
   <developer id="org.cosmic-utils">
     <name>Joonas Tuomi</name>
   </developer>
   <description>
     <p>
-      Fingerprint management for multi-user systems using the fprintd daemon. It allows you to register and delete fingerprints for authentication on your Linux system.
+      Fingerprint management for multi-user systems. Allows you to register, verify and delete prints.
     </p>
   </description>
   <icon type="remote" width="64" height="64" scale="1">
@@ -31,11 +31,12 @@
   <categories>
     <category>Utility</category>
     <category>System</category>
-    <category>COSMIC</category>
+    <category>X-COSMIC</category>
   </categories>
   <keywords>
     <keyword>Fingerprint</keyword>
     <keyword>Authentication</keyword>
+    <keyword>COSMIC</keyword>
   </keywords>
   <branding>
     <color type="primary" scheme_preference="light">#7ea5ae</color>
