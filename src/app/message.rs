@@ -341,7 +341,8 @@ impl AppModel {
         if clear {
             self.enrolled_fingers.clear();
         } else {
-            self.enrolled_fingers.retain(|f| f != self.selected_finger.as_finger_id().unwrap());
+            self.enrolled_fingers
+                .retain(|f| f != self.selected_finger.as_finger_id().unwrap());
         }
 
         Task::none()
