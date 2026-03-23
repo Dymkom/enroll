@@ -4,7 +4,7 @@ use crate::app::AppModel;
 use crate::app::error::AppError;
 use crate::app::tasks::*;
 use crate::app::{ContextPage, Finger};
-use crate::config::{AppTheme, Config, is_cosmic_desktop};
+use crate::config::{AppTheme, Config};
 use crate::fl;
 use crate::fprint_dbus::DeviceProxy;
 use cosmic::{Task, command};
@@ -421,15 +421,7 @@ impl AppModel {
             ..self.config.clone()
         })];
 
-        let task = if theme == AppTheme::Dark {
-            command::set_theme(cosmic::Theme::dark())
-        } else if theme == AppTheme::Light {
-            command::set_theme(cosmic::Theme::light())
-        } else if is_cosmic_desktop() {
-            command::set_theme(cosmic::theme::system_preference())
-        } else {
-            Task::none()
-        };
+        let task = cosmic::command::set_theme(theme.theme());
 
         tasks.push(task);
         Task::batch(tasks)
