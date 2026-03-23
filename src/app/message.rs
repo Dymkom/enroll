@@ -380,11 +380,10 @@ impl AppModel {
     pub(crate) fn on_update_config(&mut self, config: Config) -> Task<cosmic::Action<Message>> {
         self.config = config.clone();
 
-        if let Some(handler) = &self.config_handler {
-            if let Err(err) = config.write_entry(handler) {
+        if let Some(handler) = &self.config_handler
+            && let Err(err) = config.write_entry(handler) {
                 tracing::error!("failed to write config: {}", err);
             }
-        }
 
         Task::none()
     }
