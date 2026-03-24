@@ -1,11 +1,14 @@
 ### 1.0.5:
+	• Config loaded at startup
+	• Theme applied from config
 	• Updated Czech translation by @lorduskordus
 ### 1.0.4:
 	• Add ashpd for Flatpak theming support
 	• Updated app metadata
 	• Czech translation by @lorduskordus
 ### 1.0.3:
-	Fixes a bug in Verify option
+	• Fixes a bug in Verify option
+	• First Flathub release
 ### 1.0.2:
 	• Fixes Verify being active for unenrolled fingers
 	• Add cargo-source.json for Flathub

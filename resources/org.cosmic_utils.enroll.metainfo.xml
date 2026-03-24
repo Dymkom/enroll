@@ -68,22 +68,41 @@
   <url type="vcs-browser">https://github.com/cosmic-utils/enroll</url>
   <screenshots>
     <screenshot type="default">
-    <image>https://user.fm/files/v2-1be40ab863867624714661b062d93218/main.png</image>
-    <caption>Main UI</caption>
-     <caption xml:lang="cs">Hlavní UI</caption>
-     <caption xml:lang="fi">Pääkäyttöliittymä</caption>
-     <caption xml:lang="se">Huvudsida</caption>
+      <image>
+        https://user.fm/files/v2-1be40ab863867624714661b062d93218/main.png
+      </image>
+      <caption>Main UI</caption>
+      <caption xml:lang="cs">Hlavní UI</caption>
+      <caption xml:lang="fi">Pääkäyttöliittymä</caption>
+      <caption xml:lang="se">Huvudsida</caption>
     </screenshot>
   </screenshots>
   <releases>
+    <release version="1.0.5" date="2026-03-24">
+      <description>
+        <p>
+          Changes:
+        </p>
+        <ul>
+          <li>Configuration is loaded and theme applied on startup</li>
+          <li>Theme setting change works better on COSMIC</li>
+          <li>Improved Czech translation</li>
+          <li>Bigger Icon with added whitespace</li>
+          <li>Fixed formatting of Release information</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.0.4" date="2026-03-21">
       <description>
         <p>
-          - Updated dependencies
-          - Flathub friendlier metadata
-          - Added Setting section for Theme
-          - New Czech translation
+          Changes:
         </p>
+        <ul>
+          <li>Updated dependencies</li>
+          <li>Flathub friendlier metadata</li>
+          <li>Added Setting section for Theme</li>
+          <li>New Czech translation</li>
+        </ul>
       </description>
     </release>
     <release version="1.0.3" date="2026-03-17">
