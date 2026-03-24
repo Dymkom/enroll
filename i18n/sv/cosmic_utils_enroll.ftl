@@ -8,6 +8,9 @@ git-description = Git commit {$hash} på {$date}
 register = Registrera
 verify = Verifiera
 delete = Radera
+danger = Varning
+cancel = Avbryt
+success = Sukse
 deleted = Raderat fingeravtryck.
 deleting = Raderar fingeravtryck...
 clear-device = Rensa enhet
@@ -15,7 +18,6 @@ confirm-clear = Är du säker?
 clearing-device = Rensar enhet...
 device-cleared = Rensad för alla kända användare.
 clear-device-confirm = Är du säker du vill radera fingeravtryck för alla kända användare?
-cancel = Avbryt
 
 alternative-ui = Andra UI
 settings-ui = Användargränssnitt

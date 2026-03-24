@@ -8,6 +8,7 @@ git-description = Git commit {$hash} dne {$date}
 register = Registrovat
 verify = Ověřit
 delete = Smazat
+danger = Varování
 success = Hotovo. Nyní zaregistrujte otisk.
 deleted = Otisk byl smazán.
 deleting = Mazání otisku...

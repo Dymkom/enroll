@@ -8,6 +8,9 @@ git-description = Git julkaisu {$hash} päivänä {$date}
 register = Rekisteröi
 verify = Varmenna
 delete = Poista
+danger = Vaara
+cancel = Peruuta
+success = Onnistui
 deleted = Sormenjälki poistettu.
 deleting = Poistetaan sormenjälkeä...
 clear-device = Tyhjennä laite
@@ -15,7 +18,6 @@ confirm-clear = Oletko varma?
 clearing-device = Tyhjennetään laitteen kaikki käyttäjien sormenjäljet...
 device-cleared = Laite tyhjennetty.
 clear-device-confirm = Oletko varma, että haluat poistaa kaikki käyttäjien sormenjäljet?
-cancel = Peruuta
 
 settings-ui = Käyttöliittymä
 alternative-ui = Toinen käyttöliittymä
