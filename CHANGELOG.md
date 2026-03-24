@@ -1,6 +1,7 @@
 ### 1.0.5:
 	• Config loaded at startup
 	• Theme applied from config
+	• Fixed inconsistency in app limits and metadata by @1peter10
 	• Updated Czech translation by @lorduskordus
 ### 1.0.4:
 	• Add ashpd for Flatpak theming support

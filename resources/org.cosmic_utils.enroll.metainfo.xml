@@ -90,6 +90,7 @@
           <li>Improved Czech translation</li>
           <li>Bigger Icon with added whitespace</li>
           <li>Fixed formatting of Release information</li>
+          <li>Lowered the window width limit and raised height</li>
         </ul>
       </description>
     </release>
