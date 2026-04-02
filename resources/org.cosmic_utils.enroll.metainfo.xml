@@ -2,6 +2,7 @@
 <component type="desktop-application">
   <id>org.cosmic_utils.enroll</id>
   <metadata_license>CC0-1.0</metadata_license>
+  <project_group>COSMIC</project_group>
   <project_license>MPL-2.0</project_license>
   <name>Enroll</name>
   <summary>Fingerprint record management</summary>
@@ -13,17 +14,26 @@
   </developer>
   <description>
     <p>
-      Fingerprint management for single and multi-user systems. Allows you to register, verify and delete prints.
+      Fingerprint record management for single and multi-user systems. You can register, verify and delete prints.
+    </p>
+    <p>
+      Select the user you which to register, by default the current user, and then the finger. Click either Register to enroll a print for a new finger, Verify to match against an existing one or Delete to remove it.
+    </p>
+    <p>
+      From View menu you can access Settings where you can configure appearance or access Delete all option, which attempts to clear all registered prints from your scanner device.
     </p>
     <p xml:lang="cs">
       Správa otisků prstů pro jednoho i více uživatelů. Umožňuje registrovat, ověřovat a mazat otisky.
     </p>
     <p xml:lang="fi">
       Sormenjälkien hallinnointi yhden ja useamman käyttäjän järjestelmille. Sallii sinun luoda, varmentaa sekä poistaa jälkiä.
-     </p>
-     <p xml:lang="se">
-       Fingerprint registreringshantering för enskilda och flera användare. Tillåter dig att registrera, verifiera och ta bort fingeravtryck.
-     </p>
+    </p>
+    <p xml:lang="se">
+      Fingerprint registreringshantering för enskilda och flera användare. Tillåter dig att registrera, verifiera och ta bort fingeravtryck.
+    </p>
+    <p xml:lang="it">
+      Gestione delle impronte digitali per sistemi monoutente e multiutente. Consente di creare, verificare ed eliminare le impronte digitali.
+    </p>
   </description>
   <icon type="remote" width="64" height="64" scale="1">
     https://github.com/cosmic-utils/enroll/raw/main/resources/icons/hicolor/scalable/apps/enroll.svg
@@ -58,6 +68,9 @@
     <keyword xml:lang="se">Fingerprint</keyword>
     <keyword xml:lang="se">Autentisering</keyword>
     <keyword xml:lang="se">COSMIC</keyword>
+    <keyword xml:lang="it">Impronta digitale</keyword>
+    <keyword xml:lang="it">Identificazione</keyword>
+    <keyword xml:lang="it">COSMIC</keyword>
   </keywords>
   <branding>
     <color type="primary" scheme_preference="light">#7ea5ae</color>
@@ -75,9 +88,23 @@
       <caption xml:lang="cs">Hlavní UI</caption>
       <caption xml:lang="fi">Pääkäyttöliittymä</caption>
       <caption xml:lang="se">Huvudsida</caption>
+      <caption xml:lang="it">Interfaccia principale</caption>
     </screenshot>
   </screenshots>
   <releases>
+  	<release version="1.0.6" date="2026-04-02">
+      <description>
+        <p>
+          Changes:
+        </p>
+        <ul>
+          <li>Decreased minimum height back to original</li>
+          <li>Updated dependencies</li>
+          <li>Italian translations added</li>
+          <li>Initial keyboard control support</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.0.5" date="2026-03-24">
       <description>
         <p>
