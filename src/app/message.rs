@@ -440,7 +440,7 @@ impl AppModel {
     ///
     /// **Returns** ***Task***()
     pub(crate) fn on_select_finger_by_number(&mut self, key: u8) -> Task<cosmic::Action<Message>> {
-        if let Some(finger) = Finger::from_key(key) {
+        if let Some(finger) = Finger::from_key(key) && !self.busy {
             self.confirm_clear = false;
             self.selected_finger = finger;
         }
