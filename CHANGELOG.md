@@ -1,3 +1,7 @@
+### 1.0.6:
+	• Italian translations by @albannobattistella
+	• Buttons 1-0, v, r & ctrl + d added
+	• libcosmic update
 ### 1.0.5:
 	• Config loaded at startup
 	• Theme applied from config
